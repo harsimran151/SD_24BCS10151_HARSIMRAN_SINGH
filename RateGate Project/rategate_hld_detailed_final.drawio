@@ -1,0 +1,583 @@
+<mxfile host="app.diagrams.net" pages="4">
+  <diagram name="1. Architecture" id="arch">
+    <mxGraphModel dx="866" dy="472" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1250" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;" value="RateGate: High Level Design (request flow through each service)" vertex="1">
+          <mxGeometry height="35" width="1200" x="20" y="5" as="geometry" />
+        </mxCell>
+        <mxCell id="frF" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=10;spacingTop=4;fontStyle=1;fontSize=12;fontColor=#000000;sketch=1;curveFitting=1;jiggle=1;" value="Functional requirements  &lt;font color=&quot;#7a5590&quot;&gt;&lt;b&gt;[M1]&lt;/b&gt;&lt;/font&gt; &lt;font color=&quot;#5f8f49&quot;&gt;&lt;b&gt;[M2]&lt;/b&gt;&lt;/font&gt; &lt;font color=&quot;#b07800&quot;&gt;&lt;b&gt;[M3]&lt;/b&gt;&lt;/font&gt; = owner" vertex="1">
+          <mxGeometry height="215" width="400" x="20" y="95" as="geometry" />
+        </mxCell>
+        <mxCell id="tF" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontSize=11;verticalAlign=top;" value="FR1  Issue and validate API keys &lt;font color=&quot;#b07800&quot;&gt;&lt;b&gt;[M3]&lt;/b&gt;&lt;/font&gt;&lt;br&gt;FR2  Plan per client, Free 10/min and Pro 100/min &lt;font color=&quot;#b07800&quot;&gt;&lt;b&gt;[M3]&lt;/b&gt;&lt;/font&gt;&lt;br&gt;FR3  Token bucket throttle, 429 with Retry-After &lt;font color=&quot;#7a5590&quot;&gt;&lt;b&gt;[M1]&lt;/b&gt;&lt;/font&gt;&lt;br&gt;FR4  X-RateLimit-Remaining header on success &lt;font color=&quot;#7a5590&quot;&gt;&lt;b&gt;[M1]&lt;/b&gt;&lt;/font&gt;&lt;br&gt;FR5  Round-robin routing to healthy backends &lt;font color=&quot;#5f8f49&quot;&gt;&lt;b&gt;[M2]&lt;/b&gt;&lt;/font&gt;&lt;br&gt;FR6  Regular health checks, skip unhealthy backends &lt;font color=&quot;#5f8f49&quot;&gt;&lt;b&gt;[M2]&lt;/b&gt;&lt;/font&gt;&lt;br&gt;FR7  Circuit breaker, 503 when no backend is left &lt;font color=&quot;#5f8f49&quot;&gt;&lt;b&gt;[M2]&lt;/b&gt;&lt;/font&gt;&lt;br&gt;FR8  Live dashboard: allowed and rejected per client,&lt;br&gt;        backend health &lt;font color=&quot;#b07800&quot;&gt;&lt;b&gt;[M3]&lt;/b&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="175" width="380" x="30" y="125" as="geometry" />
+        </mxCell>
+        <mxCell id="frN" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=10;spacingTop=4;fontStyle=1;fontSize=12;fontColor=#000000;sketch=1;curveFitting=1;jiggle=1;" value="Non-functional requirements" vertex="1">
+          <mxGeometry height="300" width="400" x="20" y="325" as="geometry" />
+        </mxCell>
+        <mxCell id="tN" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontSize=11;verticalAlign=top;" value="&lt;b&gt;NFR1  Low latency:&lt;/b&gt; under 10 ms added at p95 (about 4 ms estimated)&lt;br&gt;&lt;br&gt;&lt;b&gt;NFR2  High availability:&lt;/b&gt; 99.9%, 2 gateway instances and a Redis replica&lt;br&gt;&lt;br&gt;&lt;b&gt;NFR3  Scalability:&lt;/b&gt; add capacity by adding instances, the gateway is stateless&lt;br&gt;&lt;br&gt;&lt;b&gt;NFR4  Accuracy under concurrency:&lt;/b&gt; atomic Lua script, no request slips past the limit&lt;br&gt;&lt;br&gt;&lt;b&gt;NFR5  Fault tolerance:&lt;/b&gt; fail-open limiter, one retry, 503 fallback&lt;br&gt;&lt;br&gt;&lt;b&gt;NFR6  Observability:&lt;/b&gt; allowed, rejected and backend health shown live&lt;br&gt;&lt;br&gt;&lt;b&gt;Target load:&lt;/b&gt; 100 req/s average, 500 req/s peak" vertex="1">
+          <mxGeometry height="265" width="380" x="30" y="355" as="geometry" />
+        </mxCell>
+        <mxCell id="client" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="&lt;b&gt;Clients&lt;/b&gt;&lt;br&gt;web, mobile, partner apps" vertex="1">
+          <mxGeometry height="50" width="140" x="450" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="lb" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="&lt;b&gt;Load Balancer&lt;/b&gt;&lt;br&gt;spreads traffic, health checks, removes dead gateways" vertex="1">
+          <mxGeometry height="61" width="140" x="450" y="177" as="geometry" />
+        </mxCell>
+        <mxCell id="admin" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;strokeWidth=2;fontSize=11;sketch=1;curveFitting=1;jiggle=1;" value="&lt;b&gt;Admin / Ops&lt;/b&gt;" vertex="1">
+          <mxGeometry height="50" width="140" x="450" y="325" as="geometry" />
+        </mxCell>
+        <mxCell id="cluster" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=10;spacingTop=4;fontStyle=1;fontSize=12;fontColor=#000000;dashed=1;dashPattern=8 6;sketch=1;curveFitting=1;jiggle=1;" value="RateGate Gateway Cluster: Instance 1 ... N (stateless, add more to scale)" vertex="1">
+          <mxGeometry height="765" width="1355" x="630" y="95" as="geometry" />
+        </mxCell>
+        <mxCell id="lane1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8ee;strokeColor=#d79b00;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=10;spacingTop=4;fontStyle=1;fontSize=12;fontColor=#b07800;sketch=1;curveFitting=1;jiggle=1;" value="(1) Auth and Config Service  [Member 3]" vertex="1">
+          <mxGeometry height="135" width="1305" x="655" y="135" as="geometry" />
+        </mxCell>
+        <mxCell id="lane2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f7f1fa;strokeColor=#9673a6;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=10;spacingTop=4;fontStyle=1;fontSize=12;fontColor=#7a5590;sketch=1;curveFitting=1;jiggle=1;" value="(2) Rate Limiter Service, token bucket  [Member 1]" vertex="1">
+          <mxGeometry height="135" width="1305" x="655" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="lane3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f1f8ef;strokeColor=#82b366;strokeWidth=2;verticalAlign=top;align=right;spacingRight=10;spacingTop=4;fontStyle=1;fontSize=12;fontColor=#5f8f49;sketch=1;curveFitting=1;jiggle=1;" value="(3) Router and Circuit Breaker  [Member 2]" vertex="1">
+          <mxGeometry height="195" width="1305" x="655" y="615" as="geometry" />
+        </mxCell>
+        <mxCell id="a0" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="Read API key / token from the request header" vertex="1">
+          <mxGeometry height="75" width="150" x="680" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="a1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="Check key (local cache first, then Config DB)" vertex="1">
+          <mxGeometry height="75" width="150" x="958" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="Load client policy: rate, burst size, allowed routes" vertex="1">
+          <mxGeometry height="75" width="150" x="1235" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="Invalid or blocked key: stop with 401 / 403" vertex="1">
+          <mxGeometry height="75" width="150" x="1513" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="a4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="Pass client_id + policy to the next step" vertex="1">
+          <mxGeometry height="75" width="150" x="1790" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="r0" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="Build counter name: client_id + route" vertex="1">
+          <mxGeometry height="75" width="150" x="1790" y="485" as="geometry" />
+        </mxCell>
+        <mxCell id="r1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="Run ONE atomic script in Redis (no race between instances)" vertex="1">
+          <mxGeometry height="75" width="150" x="1513" y="485" as="geometry" />
+        </mxCell>
+        <mxCell id="r2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="Refill: tokens + time passed x rate (never above burst)" vertex="1">
+          <mxGeometry height="75" width="150" x="1235" y="485" as="geometry" />
+        </mxCell>
+        <mxCell id="r3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="Token available? Take 1 and allow" vertex="1">
+          <mxGeometry height="75" width="150" x="958" y="485" as="geometry" />
+        </mxCell>
+        <mxCell id="r4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="No token: stop with 429 + Retry-After" vertex="1">
+          <mxGeometry height="75" width="150" x="680" y="485" as="geometry" />
+        </mxCell>
+        <mxCell id="t0" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="Match the path to a backend service" vertex="1">
+          <mxGeometry height="75" width="150" x="680" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="t1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="Pick a server: round robin among healthy ones" vertex="1">
+          <mxGeometry height="75" width="150" x="862" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="t2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="Circuit breaker check: Closed / Open / Half-Open" vertex="1">
+          <mxGeometry height="75" width="150" x="1044" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="t3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="Set a timeout; retry once on another server" vertex="1">
+          <mxGeometry height="75" width="150" x="1226" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="bf" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f9ff;strokeColor=#6c8ebf;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=10;spacingTop=4;fontStyle=1;fontSize=11;fontColor=#000000;sketch=1;curveFitting=1;jiggle=1;" value="Backend Services" vertex="1">
+          <mxGeometry height="155" width="170" x="1408" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="bA" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="Backend Service A (server 1, server 2)" vertex="1">
+          <mxGeometry height="36" width="150" x="1418" y="672" as="geometry" />
+        </mxCell>
+        <mxCell id="bB" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="Backend Service B (server 1, server 2)" vertex="1">
+          <mxGeometry height="36" width="150" x="1418" y="712" as="geometry" />
+        </mxCell>
+        <mxCell id="bC" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="Backend Service C (server 1, server 2)" vertex="1">
+          <mxGeometry height="36" width="150" x="1418" y="752" as="geometry" />
+        </mxCell>
+        <mxCell id="t4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="Send response back (add rate-limit headers)" vertex="1">
+          <mxGeometry height="75" width="150" x="1610" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="emit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="&lt;b&gt;Metrics and Event Emitter&lt;/b&gt;&lt;br&gt;after the response, non-blocking" vertex="1">
+          <mxGeometry height="75" width="150" x="1792" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="bnote" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontSize=10;fontColor=#555555;" value="Each success or failure from a server is what the circuit breaker counts." vertex="1">
+          <mxGeometry height="32" width="330" x="1408" y="812" as="geometry" />
+        </mxCell>
+        <mxCell id="cfg" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#ffe6cc;strokeColor=#666666;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="&lt;b&gt;Config DB&lt;/b&gt;&lt;br&gt;API keys, client policies (managed by Admin)" vertex="1">
+          <mxGeometry height="100" width="190" x="938" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="redis" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#fff2cc;strokeColor=#666666;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="&lt;b&gt;Redis (primary + replica)&lt;/b&gt;&lt;br&gt;token counters shared by all gateway instances" vertex="1">
+          <mxGeometry height="100" width="215" x="1480" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="lane4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff8ee;strokeColor=#d79b00;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=10;spacingTop=4;fontStyle=1;fontSize=12;fontColor=#b07800;sketch=1;curveFitting=1;jiggle=1;" value="Analytics, Alerts and Dashboard  [Member 3]" vertex="1">
+          <mxGeometry height="230" width="1115" x="655" y="880" as="geometry" />
+        </mxCell>
+        <mxCell id="mq" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="&lt;b&gt;Message Queue&lt;/b&gt;&lt;br&gt;request events (keeps analytics off the request path)" vertex="1">
+          <mxGeometry height="80" width="150" x="1792" y="915" as="geometry" />
+        </mxCell>
+        <mxCell id="an" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="&lt;b&gt;Analytics Service&lt;/b&gt;&lt;br&gt;counts requests, 429s, errors, latency" vertex="1">
+          <mxGeometry height="80" width="170" x="1500" y="915" as="geometry" />
+        </mxCell>
+        <mxCell id="ms" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#fff8ee;strokeColor=#666666;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="&lt;b&gt;Metrics Store&lt;/b&gt;&lt;br&gt;data over time" vertex="1">
+          <mxGeometry height="80" width="170" x="1210" y="915" as="geometry" />
+        </mxCell>
+        <mxCell id="dash" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="&lt;b&gt;Live Dashboard&lt;/b&gt;" vertex="1">
+          <mxGeometry height="80" width="170" x="920" y="915" as="geometry" />
+        </mxCell>
+        <mxCell id="alerts" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;strokeWidth=2;fontSize=10;sketch=1;curveFitting=1;jiggle=1;" value="&lt;b&gt;Alerts&lt;/b&gt;&lt;br&gt;many 429s, breaker open" vertex="1">
+          <mxGeometry height="60" width="170" x="1500" y="1020" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;spacingLeft=6;fillColor=#ffffff;strokeColor=#666666;strokeWidth=1;fontSize=10;" value="&lt;b&gt;Legend&lt;/b&gt;&lt;br&gt;Solid arrow = request path&lt;br&gt;&lt;font color=&quot;#8a8a8a&quot;&gt;Dashed grey&lt;/font&gt; = data lookup&lt;br&gt;&lt;font color=&quot;#7030a0&quot;&gt;Dashed purple&lt;/font&gt; = async event&lt;br&gt;&lt;font color=&quot;#d32f2f&quot;&gt;Dashed red&lt;/font&gt; = error returned to client" vertex="1">
+          <mxGeometry height="95" width="190" x="1792" y="1020" as="geometry" />
+        </mxCell>
+        <mxCell id="e_c_lb" edge="1" parent="1" source="client" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="lb" value="request + API key">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_lb_a0" edge="1" parent="1" source="lb" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="a0" value="to one instance">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_a0" edge="1" parent="1" source="a0" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="a1" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_a1" edge="1" parent="1" source="a1" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="a2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_a2" edge="1" parent="1" source="a2" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="a3" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_a3" edge="1" parent="1" source="a3" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="a4" value="key valid">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_a4_r0" edge="1" parent="1" source="a4" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="r0" value="valid key + policy">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_r0" edge="1" parent="1" source="r0" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" target="r1" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_r1" edge="1" parent="1" source="r1" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" target="r2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_r2" edge="1" parent="1" source="r2" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" target="r3" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_r3_t0" edge="1" parent="1" source="r3" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="t0" value="allowed">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1033" y="600" />
+              <mxPoint x="755" y="600" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_t0" edge="1" parent="1" source="t0" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="t1" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_t1" edge="1" parent="1" source="t1" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="t2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_t2" edge="1" parent="1" source="t2" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="t3" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_t3_bf" edge="1" parent="1" source="t3" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="bf" value="forward">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_bf_t4" edge="1" parent="1" source="bf" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="t4" value="response">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_t4_emit" edge="1" parent="1" source="t4" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="emit" value="log">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_a1_cfg" edge="1" parent="1" source="a1" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#8a8a8a;sketch=1;curveFitting=1;jiggle=1;startArrow=block;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="cfg" value="read policy (cached)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_r1_redis" edge="1" parent="1" source="r1" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#8a8a8a;sketch=1;curveFitting=1;jiggle=1;startArrow=block;dashed=1;exitX=0.5;exitY=0;entryX=0.5;entryY=1;" target="redis" value="take 1 token (atomic)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_401" edge="1" parent="1" source="a3" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#d32f2f;sketch=1;curveFitting=1;jiggle=1;dashed=1;exitX=0.5;exitY=0;entryX=0.5;entryY=0;" target="client" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1588" y="75" />
+              <mxPoint x="520" y="75" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_r3_r4" edge="1" parent="1" source="r3" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#d32f2f;sketch=1;curveFitting=1;jiggle=1;dashed=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" target="r4" value="no token">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_429" edge="1" parent="1" source="r4" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#d32f2f;sketch=1;curveFitting=1;jiggle=1;dashed=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;jumpStyle=arc;jumpSize=10;" target="client" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="605" y="522" />
+              <mxPoint x="605" y="125" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="t401" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontSize=10;fontColor=#d32f2f;" value="401 / 403 Unauthorized" vertex="1">
+          <mxGeometry height="20" width="200" x="1000" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="t429" parent="1" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontSize=10;fontColor=#d32f2f;" value="429 Too Many Requests&lt;br&gt;(+ Retry-After)" vertex="1">
+          <mxGeometry height="34" width="150" x="450" y="262" as="geometry" />
+        </mxCell>
+        <mxCell id="e_emit_mq" edge="1" parent="1" source="emit" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#7030a0;sketch=1;curveFitting=1;jiggle=1;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="mq" value="async events">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_mq_an" edge="1" parent="1" source="mq" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#7030a0;sketch=1;curveFitting=1;jiggle=1;dashed=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" target="an" value="consume">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_an_ms" edge="1" parent="1" source="an" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" target="ms" value="save metrics">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_ms_dash" edge="1" parent="1" source="ms" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" target="dash" value="read">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_an_alert" edge="1" parent="1" source="an" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="alerts" value="rules">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_admin_cfg" edge="1" parent="1" source="admin" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#8a8a8a;sketch=1;curveFitting=1;jiggle=1;dashed=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;jumpStyle=arc;jumpSize=10;" target="cfg" value="manage keys and limits">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_admin_dash" edge="1" parent="1" source="admin" style="html=1;endArrow=block;strokeWidth=2;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#000000;sketch=1;curveFitting=1;jiggle=1;exitX=0.5;exitY=1;entryX=0;entryY=0.5;" target="dash" value="views">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="520" y="955" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p2" name="2. Request flow">
+    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="h0" value="Client" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="30" y="20" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="life0" value="" style="html=1;endArrow=block;fontSize=10;endArrow=none;dashed=1;strokeColor=#999999;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="90" y="60" as="sourcePoint" />
+            <mxPoint x="90" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h1" value="Load Balancer" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="210" y="20" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="life1" value="" style="html=1;endArrow=block;fontSize=10;endArrow=none;dashed=1;strokeColor=#999999;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="270" y="60" as="sourcePoint" />
+            <mxPoint x="270" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h2" value="Auth &amp;amp; Config" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="390" y="20" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="life2" value="" style="html=1;endArrow=block;fontSize=10;endArrow=none;dashed=1;strokeColor=#999999;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="60" as="sourcePoint" />
+            <mxPoint x="450" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h3" value="Rate Limiter" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="570" y="20" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="life3" value="" style="html=1;endArrow=block;fontSize=10;endArrow=none;dashed=1;strokeColor=#999999;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="630" y="60" as="sourcePoint" />
+            <mxPoint x="630" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h4" value="Redis" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="750" y="20" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="life4" value="" style="html=1;endArrow=block;fontSize=10;endArrow=none;dashed=1;strokeColor=#999999;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="810" y="60" as="sourcePoint" />
+            <mxPoint x="810" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h5" value="Router + Breaker" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="930" y="20" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="life5" value="" style="html=1;endArrow=block;fontSize=10;endArrow=none;dashed=1;strokeColor=#999999;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="990" y="60" as="sourcePoint" />
+            <mxPoint x="990" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h6" value="Backend" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="20" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="life6" value="" style="html=1;endArrow=block;fontSize=10;endArrow=none;dashed=1;strokeColor=#999999;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1170" y="60" as="sourcePoint" />
+            <mxPoint x="1170" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h7" value="Message Queue" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="20" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="life7" value="" style="html=1;endArrow=block;fontSize=10;endArrow=none;dashed=1;strokeColor=#999999;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1350" y="60" as="sourcePoint" />
+            <mxPoint x="1350" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m1" value="1. request + API key" style="html=1;endArrow=block;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="90" y="110" as="sourcePoint" />
+            <mxPoint x="270" y="110" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2" value="2. send to one gateway instance" style="html=1;endArrow=block;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="270" y="150" as="sourcePoint" />
+            <mxPoint x="450" y="150" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m3" value="3. key valid, policy loaded" style="html=1;endArrow=block;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="190" as="sourcePoint" />
+            <mxPoint x="630" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m4" value="4. token-bucket check (atomic)" style="html=1;endArrow=block;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="630" y="230" as="sourcePoint" />
+            <mxPoint x="810" y="230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m5" value="5. token taken / none left" style="html=1;endArrow=block;fontSize=10;labelBackgroundColor=#ffffff;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="810" y="270" as="sourcePoint" />
+            <mxPoint x="630" y="270" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m6" value="6. allowed" style="html=1;endArrow=block;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="630" y="310" as="sourcePoint" />
+            <mxPoint x="990" y="310" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7" value="7. forward to healthy server (breaker Closed)" style="html=1;endArrow=block;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="990" y="350" as="sourcePoint" />
+            <mxPoint x="1170" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m8" value="8. response" style="html=1;endArrow=block;fontSize=10;labelBackgroundColor=#ffffff;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1170" y="390" as="sourcePoint" />
+            <mxPoint x="990" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m9" value="9. response returned to client" style="html=1;endArrow=block;fontSize=10;labelBackgroundColor=#ffffff;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="990" y="430" as="sourcePoint" />
+            <mxPoint x="90" y="430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m10" value="10. async event: client, route, status, time" style="html=1;endArrow=block;fontSize=10;labelBackgroundColor=#ffffff;dashed=1;strokeColor=#9673a6;fontColor=#9673a6;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="990" y="470" as="sourcePoint" />
+            <mxPoint x="1350" y="470" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="failhead" value="Failure cases (request stops early)" style="html=1;whiteSpace=wrap;text;fontSize=20;fontStyle=1;align=left;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="90" y="510" width="400" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="m11" value="401 / 403 if the key is invalid or blocked" style="html=1;endArrow=block;fontSize=10;labelBackgroundColor=#ffffff;dashed=1;strokeColor=#b85450;fontColor=#b85450;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="560" as="sourcePoint" />
+            <mxPoint x="90" y="560" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m12" value="429 + Retry-After if no tokens are left" style="html=1;endArrow=block;fontSize=10;labelBackgroundColor=#ffffff;dashed=1;strokeColor=#b85450;fontColor=#b85450;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="630" y="600" as="sourcePoint" />
+            <mxPoint x="90" y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m13" value="503 if every server&#39;s breaker is Open" style="html=1;endArrow=block;fontSize=10;labelBackgroundColor=#ffffff;dashed=1;strokeColor=#b85450;fontColor=#b85450;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="990" y="640" as="sourcePoint" />
+            <mxPoint x="90" y="640" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="note2" value="Steps 1–9 are the request path and must stay under 10 ms added delay (p95). Step 10 happens after the response, so it never slows the client." style="html=1;whiteSpace=wrap;rounded=1;fillColor=#fffbe6;strokeColor=#d6b656;fontSize=11;align=left;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="90" y="715" width="900" height="50" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p3" name="3. Algorithms">
+    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="760" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="Token Bucket (Rate Limiter)" style="html=1;whiteSpace=wrap;text;fontSize=20;fontStyle=1;align=left;verticalAlign=middle;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="40" y="10" width="500" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="tb0" value="Request arrives&lt;br&gt;(client_id + route)" style="html=1;whiteSpace=wrap;ellipse;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="100" y="55" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="tb1" value="Refill: tokens = min(burst, tokens + seconds since last refill × rate)" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="80" y="135" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="tb2" value="tokens ≥ 1 ?" style="html=1;whiteSpace=wrap;rhombus;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="100" y="225" width="200" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="tb3" value="tokens = tokens − 1&lt;br&gt;save back to Redis" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="80" y="360" width="240" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="tb4" value="ALLOW → send to Router" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#82b366;strokeColor=#2d7600;fontColor=#ffffff;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="100" y="445" width="200" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="tb5" value="REJECT → 429 Too Many Requests&lt;br&gt;+ Retry-After header" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="370" y="245" width="230" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="tbe0" value="" style="html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="tb0" target="tb1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="tbe1" value="" style="html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="tb1" target="tb2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="tbe2" value="Yes" style="html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="tb2" target="tb3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="tbe3" value="No" style="html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="tb2" target="tb5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="tbe4" value="" style="html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="tb3" target="tb4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="tbex" value="&lt;b&gt;Example:&lt;/b&gt; burst = 10, rate = 1 token per second&lt;br&gt;• Client was idle → bucket is full (10)&lt;br&gt;• 10 requests at once → all allowed, bucket is empty&lt;br&gt;• 11th request right away → 429&lt;br&gt;• 1 second later → 1 token is back → next request allowed&lt;br&gt;&lt;b&gt;Why this algorithm:&lt;/b&gt; short bursts are fine, long-term rate stays fair, and it needs only 2 numbers per client (tokens, last refill time)." style="html=1;whiteSpace=wrap;rounded=1;fillColor=#fffbe6;strokeColor=#d6b656;align=left;spacing=8;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="80" y="530" width="560" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="t2" value="Circuit Breaker (per backend server)" style="html=1;whiteSpace=wrap;text;fontSize=20;fontStyle=1;align=left;verticalAlign=middle;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="760" y="10" width="500" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cb1" value="CLOSED&lt;br&gt;(normal)" style="html=1;whiteSpace=wrap;ellipse;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="760" y="80" width="160" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="cb2" value="OPEN&lt;br&gt;(blocked)" style="html=1;whiteSpace=wrap;ellipse;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1160" y="80" width="160" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="cb3" value="HALF-OPEN&lt;br&gt;(testing)" style="html=1;whiteSpace=wrap;ellipse;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="960" y="330" width="180" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="cbe1" value="failures reach the limit (example: 5 in a row)" style="html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="cb1" target="cb2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cbe2" value="after a wait time (example: 30 s)" style="html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="cb2" target="cb3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cbe3" value="test requests succeed" style="html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="cb3" target="cb1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cbe4" value="a test request fails" style="html=1;endArrow=block;fontSize=10;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="cb3" target="cb2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1370" y="375" />
+              <mxPoint x="1370" y="125" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cbn1" value="&lt;b&gt;Closed:&lt;/b&gt; all requests go through; failures are counted." style="html=1;whiteSpace=wrap;rounded=1;fillColor=#fffbe6;strokeColor=#d6b656;align=left;spacing=8;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="700" y="470" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="cbn2" value="&lt;b&gt;Open:&lt;/b&gt; no requests are sent to this server; the router uses another server right away." style="html=1;whiteSpace=wrap;rounded=1;fillColor=#fffbe6;strokeColor=#d6b656;align=left;spacing=8;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="940" y="470" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="cbn3" value="&lt;b&gt;Half-Open:&lt;/b&gt; only a few test requests are allowed to see if the server has recovered." style="html=1;whiteSpace=wrap;rounded=1;fillColor=#fffbe6;strokeColor=#d6b656;align=left;spacing=8;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1180" y="470" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="cbn4" value="The numbers (5 failures, 30 seconds) are example values; tune them for your project." style="html=1;whiteSpace=wrap;text;fontSize=10;fontStyle=2;align=left;" vertex="1" parent="1">
+          <mxGeometry x="700" y="570" width="700" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p4" name="4. Failure handling">
+    <mxGraphModel dx="981" dy="535" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="720" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t4" parent="1" style="html=1;whiteSpace=wrap;text;fontSize=20;fontStyle=1;align=left;verticalAlign=middle;fontSize=16;" value="What happens when something breaks?" vertex="1">
+          <mxGeometry height="30" width="600" x="40" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="hd40" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;" value="Scenario" vertex="1">
+          <mxGeometry height="40" width="230" x="40" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="hd290" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;" value="What the system sees" vertex="1">
+          <mxGeometry height="40" width="350" x="290" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="hd660" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;" value="How the design handles it" vertex="1">
+          <mxGeometry height="40" width="690" x="660" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="r0_40" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;fontStyle=1;" value="Redis is down or slow" vertex="1">
+          <mxGeometry height="70" width="230" x="40" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="r0_290" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;" value="Gateway cannot read or update token counts" vertex="1">
+          <mxGeometry height="70" width="350" x="290" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="r0_660" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;" value="Choose a rule and state it: fail-open (let requests through, favours availability) or fail-closed (block, favours protecting backends). Use a Redis replica and a short timeout so latency stays low." vertex="1">
+          <mxGeometry height="70" width="690" x="660" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="r1_40" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;fontStyle=1;" value="One gateway instance crashes" vertex="1">
+          <mxGeometry height="70" width="230" x="40" y="185" as="geometry" />
+        </mxCell>
+        <mxCell id="r1_290" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;" value="Its share of traffic fails for a moment" vertex="1">
+          <mxGeometry height="70" width="350" x="290" y="185" as="geometry" />
+        </mxCell>
+        <mxCell id="r1_660" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;" value="The load balancer&#39;s health check removes it; other instances keep serving. Counters live in Redis, so no counts are lost." vertex="1">
+          <mxGeometry height="70" width="690" x="660" y="185" as="geometry" />
+        </mxCell>
+        <mxCell id="r2_40" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;fontStyle=1;" value="A backend server keeps failing" vertex="1">
+          <mxGeometry height="70" width="230" x="40" y="265" as="geometry" />
+        </mxCell>
+        <mxCell id="r2_290" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;" value="Requests to it time out or return errors" vertex="1">
+          <mxGeometry height="70" width="350" x="290" y="265" as="geometry" />
+        </mxCell>
+        <mxCell id="r2_660" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;" value="Its circuit breaker opens; the router uses other servers; Half-Open tests bring it back when healthy." vertex="1">
+          <mxGeometry height="70" width="690" x="660" y="265" as="geometry" />
+        </mxCell>
+        <mxCell id="r3_40" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;fontStyle=1;" value="All servers of one service are down" vertex="1">
+          <mxGeometry height="70" width="230" x="40" y="345" as="geometry" />
+        </mxCell>
+        <mxCell id="r3_290" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;" value="No healthy target to send to" vertex="1">
+          <mxGeometry height="70" width="350" x="290" y="345" as="geometry" />
+        </mxCell>
+        <mxCell id="r3_660" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;" value="The router returns 503 quickly instead of making clients wait." vertex="1">
+          <mxGeometry height="70" width="690" x="660" y="345" as="geometry" />
+        </mxCell>
+        <mxCell id="r4_40" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;fontStyle=1;" value="Message queue or analytics is slow or down" vertex="1">
+          <mxGeometry height="70" width="230" x="40" y="425" as="geometry" />
+        </mxCell>
+        <mxCell id="r4_290" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;" value="Dashboard is late or has gaps" vertex="1">
+          <mxGeometry height="70" width="350" x="290" y="425" as="geometry" />
+        </mxCell>
+        <mxCell id="r4_660" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;" value="Events are sent asynchronously after the response, so client requests are not affected." vertex="1">
+          <mxGeometry height="70" width="690" x="660" y="425" as="geometry" />
+        </mxCell>
+        <mxCell id="r5_40" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;fontStyle=1;" value="Config DB is down" vertex="1">
+          <mxGeometry height="70" width="230" x="40" y="505" as="geometry" />
+        </mxCell>
+        <mxCell id="r5_290" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;" value="New keys and limits cannot be loaded" vertex="1">
+          <mxGeometry height="70" width="350" x="290" y="505" as="geometry" />
+        </mxCell>
+        <mxCell id="r5_660" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;" value="Auth uses its local cache of recent keys and policies, so existing clients keep working." vertex="1">
+          <mxGeometry height="70" width="690" x="660" y="505" as="geometry" />
+        </mxCell>
+        <mxCell id="r6_40" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;fontStyle=1;" value="Traffic goes above 500 requests/sec" vertex="1">
+          <mxGeometry height="70" width="230" x="40" y="585" as="geometry" />
+        </mxCell>
+        <mxCell id="r6_290" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;" value="More load than planned" vertex="1">
+          <mxGeometry height="70" width="350" x="290" y="585" as="geometry" />
+        </mxCell>
+        <mxCell id="r6_660" parent="1" style="html=1;whiteSpace=wrap;rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacing=6;fontSize=11;" value="Add more gateway instances (they are stateless). The rate limiter keeps backends protected meanwhile." vertex="1">
+          <mxGeometry height="70" width="690" x="660" y="585" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
