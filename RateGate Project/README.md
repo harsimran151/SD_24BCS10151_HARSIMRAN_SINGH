@@ -4,7 +4,7 @@ RateGate is a high-level design for an API gateway with client authentication, r
 
 ## Architecture
 
-![RateGate architecture](rategate_hld_detailed_final-1.%20Architecture.drawio.svg)
+![RateGate architecture](rategate_hld.drawio.png)
 
 ## Request flow
 
